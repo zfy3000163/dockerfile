@@ -1,0 +1,78 @@
+FROM zfy3000/ubotica_v1.6 
+
+COPY staticcamera_0819 /opt/staticcamera/ 
+#COPY staticcamera_0819/JsonFiles/StaticCameraConfiguration_top.json /opt/staticcamera/JsonFiles/StaticCameraConfiguration.json 
+
+COPY staticcamera-service /usr/local/bin
+RUN chmod 777 /usr/local/bin/staticcamera-service
+
+COPY staticcamera_run_top.sh /usr/local/bin/staticcamera_run.sh
+RUN chmod 777 /usr/local/bin/staticcamera_run.sh
+
+COPY vnc_env.sh /usr/local/bin
+RUN chmod 777 /usr/local/bin/vnc_env.sh
+
+#COPY ncsdk19 /opt/ncsdk19/
+#WORKDIR /opt/ncsdk19/ncsdk19pt7pt5/ 
+#RUN chmod 777 /opt/ncsdk19/ncsdk19pt7pt5/setup.sh 
+#RUN export PATH=$PATH:/bin:/usr/bin ; /opt/ncsdk19/ncsdk19pt7pt5/setup.sh
+
+##install openvino
+ARG DOWNLOAD_LINK=l_openvino_toolkit_p_2019.3.376.tgz
+ARG INSTALL_DIR=/opt/intel/openvino
+ARG TEMP_DIR=/tmp/openvino_installer
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    cpio \
+    sudo \
+    lsb-release && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir -p $TEMP_DIR
+COPY $DOWNLOAD_LINK $TEMP_DIR 
+RUN cd $TEMP_DIR && tar xf l_openvino_toolkit*.tgz && \
+    cd l_openvino_toolkit* && \
+    sed -i 's/decline/accept/g' silent.cfg && \
+    ./install.sh -s silent.cfg && \
+    rm -rf $TEMP_DIR
+RUN chmod 777 $INSTALL_DIR/install_dependencies/install_openvino_dependencies.sh 
+RUN $INSTALL_DIR/install_dependencies/install_openvino_dependencies.sh
+# build Inference Engine samples
+RUN mkdir $INSTALL_DIR/deployment_tools/inference_engine/samples/build && cd $INSTALL_DIR/deployment_tools/inference_engine/samples/build && \
+     sudo /bin/bash -c "source $INSTALL_DIR/bin/setupvars.sh && cmake .. && make -j4"
+
+RUN  sed -i 's/openvino_2019.1.094/openvino/g' ~/.bashrc
+
+##install libusb
+#RUN apt-get install -y unzip && apt-get install -y autoconf && \
+#   apt-get install -y libtool && apt-get install -y python3 && apt-get install -y python3-pip && \
+#   cd /tmp/ && \
+#   wget https://github.com/libusb/libusb/archive/v1.0.22.zip && \
+#   unzip v1.0.22.zip && cd libusb-1.0.22 && \
+#   ./bootstrap.sh && \
+#   ./configure --disable-udev --enable-shared && \
+#   make -j4 && make install && \
+#   rm -rf /tmp/*
+
+
+
+WORKDIR /opt/staticcamera/test 
+
+RUN pip install oslo_utils -i https://pypi.tuna.tsinghua.edu.cn/simple && pip install future  -i https://pypi.tuna.tsinghua.edu.cn/simple 
+
+RUN apt update \
+    && apt install -y --no-install-recommends --allow-unauthenticated \
+        supervisor sudo net-tools zenity xz-utils \
+        dbus-x11 x11-utils alsa-utils \
+        mesa-utils libgl1-mesa-dri \
+    && apt autoclean -y \
+    && apt autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+# install debs error if combine together
+RUN apt update \
+    && apt install -y --no-install-recommends --allow-unauthenticated \
+        xvfb x11vnc \
+    && apt autoclean -y \
+    && apt autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
+ENTRYPOINT ["/usr/local/bin/staticcamera_run.sh"]
