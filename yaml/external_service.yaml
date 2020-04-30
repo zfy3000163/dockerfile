@@ -1,0 +1,15 @@
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    k8s-app: app-mysql
+  name: app-mysql-external
+spec:
+  ports:
+    - port: 3306
+      targetPort: 3306
+      nodePort: 30306
+  type: NodePort
+  selector:
+    app: app 
+    tier: mysql

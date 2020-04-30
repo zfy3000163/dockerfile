@@ -1,0 +1,45 @@
+# Create a deployment for mysql.
+kind: Deployment
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+metadata:
+  name: app-mysql
+  labels:
+    app: app 
+spec:
+  selector:
+    matchLabels:
+      app: app 
+      tier: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: app 
+        tier: mysql
+    spec:
+      nodeName: k8snode-2.novalocal 
+      containers:
+      - image: mec/app-mysql:20200319-v01.001
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: app2020 
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+        - name: mysql-config
+          mountPath: /etc/app/
+      volumes:
+      - name: mysql-persistent-storage
+        hostPath:
+          path: /var/lib/app/mysql 
+      - name: mysql-config
+        hostPath:
+          path: /etc/app/ 
+      #- name: mysql-persistent-storage
+      #  persistentVolumeClaim:
+      #    claimName: mysql-storage

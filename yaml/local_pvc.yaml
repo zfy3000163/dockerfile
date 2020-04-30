@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    pv.kubernetes.io/bind-completed: "yes"
+    pv.kubernetes.io/bound-by-controller: "yes"
+    volume.beta.kubernetes.io/storage-class: standard
+  creationTimestamp: "2020-04-21T08:28:20Z"
+  finalizers:
+  - kubernetes.io/pvc-protection
+  labels:
+    app: app-mysql-pvc
+    chart: mysql-5.8
+    heritage: Tiller
+    #release: app 
+  name: app-mysql-pvc
+  #namespace: app 
+  resourceVersion: "122591"
+  #selfLink: /api/v1/persistentvolumeclaims/app-mysql
+  #uid: 0efacd60-83aa-11ea-96db-001a4a160199
+spec:
+  accessModes:
+  - ReadWriteOnce
+  dataSource: null
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+  volumeMode: Filesystem
+  volumeName: app-10g-pv
+status:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 10Gi
+  phase: Bound

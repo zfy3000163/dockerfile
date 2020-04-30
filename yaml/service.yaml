@@ -1,0 +1,14 @@
+# Create a mysql service.
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-mysql
+  labels:
+    app: app 
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app: app 
+    tier: mysql
+  clusterIP: None
