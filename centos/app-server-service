@@ -1,0 +1,34 @@
+#!/bin/sh
+ _stop()
+{
+	ps -ef|grep  "app-server" |grep -v grep|awk '{print $2}'|xargs kill
+	echo  "stop...\n"
+	sleep 3 
+	is_exist=`ps -ef|grep  "app-server" |grep -v grep|awk '{print $2}'|wc|awk '{print $1}'`
+	if [ $is_exist -ne 0 ] 
+	then
+		echo  "Program is exist, kill -9 again.... \n"
+		ps -ef|grep  "app-server" |grep -v grep|awk '{print $2}'|xargs kill -9
+	fi
+	
+}
+
+
+_start()
+{    
+	/usr/bin/app_server_service_run.sh &
+}
+
+if [ $# -eq 0 ]
+then
+	echo "app-server-service [start/stop]"
+fi
+
+case "$1" in
+    start)
+	_start
+	;;
+    stop)
+        _stop
+        ;;
+esac

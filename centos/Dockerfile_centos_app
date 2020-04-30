@@ -1,0 +1,45 @@
+FROM docker.io/ansible/centos7-ansible
+
+
+RUN yum clean all && yum -y update 
+RUN yum install -y vim gcc net-tools python36.x86_64 python3-pip 
+RUN yum install -y vim openssl openssh-server passwd net-tools python36.x86_64 python3-pip 
+RUN sed -i 's/UsePAM yes/UsePAM no/g' /etc/ssh/sshd_config
+RUN sed -i 's/#UsePrivilegeSeparation.*/UsePrivilegeSeparation no/g' /etc/ssh/sshd_config
+RUN /bin/echo 'root:root' | chpasswd
+RUN ssh-keygen -q -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key -N '' 
+RUN ssh-keygen -q -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N  '' 
+RUN ssh-keygen -t dsa -f /etc/ssh/ssh_host_ed25519_key -N '' 
+
+Run yum install -y net-snmp-utils.x86_64 python-devel.x86_64 alembic.x86_64 alembic-devel.x86_64 \
+        net-snmp-python initscripts shellinabox psmisc 
+
+RUN pip install --upgrade pip && pip install oslo_config --ignore-installed PyYAML -i https://pypi.tuna.tsinghua.edu.cn/simple 
+RUN pip install oslo_utils oslo_log oslo_service oslo_messaging oslo_db oslo_policy  -i https://pypi.tuna.tsinghua.edu.cn/simple && \
+        pip install future  -i https://pypi.tuna.tsinghua.edu.cn/simple 
+
+
+RUN pip install pbr -i https://pypi.tuna.tsinghua.edu.cn/simple && pip install debtcollector eventlet pymysql simplejson \
+        -i https://pypi.tuna.tsinghua.edu.cn/simple 
+RUN pip install pecan WSME
+RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 
+ENV LANG en_US.utf8
+
+
+COPY app /opt/app
+
+COPY app/deploy/docker/app_server_service_run.sh /usr/bin/app_server_service_run.sh
+RUN chmod 655 /usr/bin/app_server_service_run.sh
+
+COPY app/deploy/docker/app-server-service /usr/bin/app-server-service
+RUN chmod 655 /usr/bin/app-server-service
+
+WORKDIR /opt/app/
+RUN python setup.py build && python setup.py install && mkdir -p /var/log/app
+
+
+WORKDIR /root
+RUN rm -rf /opt/app 
+
+
+cmd ["sh","/usr/bin/app_server_service_run.sh"]

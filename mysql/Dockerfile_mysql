@@ -1,0 +1,23 @@
+FROM docker.io/mysql:5.7
+
+RUN apt-get -y update
+RUN apt-get install -y vim openssl openssh-server passwd net-tools 
+RUN sed -i 's/UsePAM yes/UsePAM no/g' /etc/ssh/sshd_config
+RUN sed -i 's/#UsePrivilegeSeparation.*/UsePrivilegeSeparation no/g' /etc/ssh/sshd_config
+RUN /bin/echo 'root:root' | chpasswd
+#RUN ssh-keygen -q -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key -N '' 
+#RUN ssh-keygen -q -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N  '' 
+#RUN ssh-keygen -t dsa -f /etc/ssh/ssh_host_ed25519_key -N '' 
+
+
+COPY app/deploy/docker/app_mysql.sh /usr/bin/app_mysql.sh
+RUN chmod 655 /usr/bin/app_mysql.sh
+
+
+COPY app/deploy/k8s/mysql/mysql.sh /usr/bin/mysql.sh
+RUN chmod 655 /usr/bin/mysql.sh
+
+COPY app/deploy/docker/create_app.sql /opt/mysql/create_app.sql
+
+
+#CMD ["sh", "/usr/bin/app_mysql.sh"]
